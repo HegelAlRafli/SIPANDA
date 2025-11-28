@@ -42,23 +42,6 @@ class HomeScreen extends StatelessWidget {
           ],
         ),
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        items: const <BottomNavigationBarItem>[
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-          BottomNavigationBarItem(
-              icon: Icon(Icons.view_list), label: 'Daftar Barang'),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profil'),
-        ],
-        currentIndex: 0,
-        type: BottomNavigationBarType.fixed,
-        selectedItemColor: Theme.of(context).colorScheme.primary,
-        unselectedItemColor: Colors.grey,
-        onTap: (index) {
-          if (index == 1) {
-            context.go('/item_list');
-          }
-        },
-      ),
     );
   }
 }
