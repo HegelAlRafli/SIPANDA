@@ -1,8 +1,15 @@
 
+import 'dart:io';
+import 'dart:typed_data';
+import 'dart:ui' as ui;
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:go_router/go_router.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:qr_flutter/qr_flutter.dart';
+import 'package:share_plus/share_plus.dart';
 
 class ItemDetailsScreen extends StatefulWidget {
   final String itemId;
@@ -13,6 +20,8 @@ class ItemDetailsScreen extends StatefulWidget {
 }
 
 class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
+  final GlobalKey _qrKey = GlobalKey();
+
   Future<void> _deleteItem(BuildContext context) async {
     try {
       await FirebaseFirestore.instance.collection('items').doc(widget.itemId).delete();
@@ -57,6 +66,29 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
         );
       },
     );
+  }
+
+  Future<void> _downloadQrCode() async {
+    try {
+      RenderRepaintBoundary boundary =
+          _qrKey.currentContext!.findRenderObject() as RenderRepaintBoundary;
+      ui.Image image = await boundary.toImage(pixelRatio: 3.0);
+      ByteData? byteData =
+          await image.toByteData(format: ui.ImageByteFormat.png);
+      Uint8List pngBytes = byteData!.buffer.asUint8List();
+
+      final tempDir = await getTemporaryDirectory();
+      final file = await File('${tempDir.path}/qr_code.png').create();
+      await file.writeAsBytes(pngBytes);
+
+      final xFile = XFile(file.path);
+      await Share.shareXFiles([xFile], text: 'Kode QR untuk ${widget.itemId}');
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Gagal mengunduh Kode QR: $e')),
+      );
+    }
   }
 
   @override
@@ -160,22 +192,32 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
                   ..._buildPemegangList(pemegangBarang),
                 
                 Center(
-                  child: QrImageView(
-                    data: widget.itemId,
-                    version: QrVersions.auto,
-                    size: 200.0,
+                  child: RepaintBoundary(
+                    key: _qrKey,
+                    child: QrImageView(
+                      data: widget.itemId,
+                      version: QrVersions.auto,
+                      size: 200.0,
+                      backgroundColor: Colors.white,
+                    ),
                   ),
                 ),
                 const SizedBox(height: 16),
                 Center(
                   child: Text(
-                    'Ambil screenshot untuk menyimpan atau membagikan QR Code ini.',
+                    'Pindai QR Code ini untuk melihat detail barang.',
                     textAlign: TextAlign.center,
                     style: Theme.of(context)
                         .textTheme
                         .bodySmall
                         ?.copyWith(color: Colors.grey[600]),
                   ),
+                ),
+                const SizedBox(height: 24),
+                ElevatedButton.icon(
+                  icon: const Icon(Icons.download),
+                  label: const Text('Unduh Kode QR'),
+                  onPressed: _downloadQrCode,
                 ),
               ],
             ),
@@ -207,7 +249,7 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
     );
   }
 
-  List<Widget> _buildPemegangList(List<dynamic> pemegangBarang) {
+    List<Widget> _buildPemegangList(List<dynamic> pemegangBarang) {
     return [
       Padding(
         padding: const EdgeInsets.symmetric(vertical: 8.0),
