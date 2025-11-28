@@ -120,10 +120,8 @@ class _EditItemScreenState extends State<EditItemScreen> {
   }
 
   Future<String?> _uploadImage(String itemId) async {
-    // If no new image is picked, keep the existing one.
     if (_imageFile == null) return _existingImageUrl;
 
-    // A new image has been picked, upload it to imgbb.
     var request = http.MultipartRequest(
         'POST', Uri.parse('https://api.imgbb.com/1/upload'));
 
@@ -155,7 +153,7 @@ class _EditItemScreenState extends State<EditItemScreen> {
                     "Gagal mengunggah gambar baru: ${response.reasonPhrase}")),
           );
         }
-        return null; // Return null on failure
+        return null;
       }
     } catch (e) {
       developer.log("Image upload failed: $e", name: "EditItemScreen");
@@ -164,7 +162,7 @@ class _EditItemScreenState extends State<EditItemScreen> {
           SnackBar(content: Text("Gagal mengunggah gambar baru: $e")),
         );
       }
-      return null; // Return null on failure
+      return null;
     }
   }
 
@@ -179,7 +177,7 @@ class _EditItemScreenState extends State<EditItemScreen> {
         setState(() {
           _isUploading = false;
         });
-        return; // Stop if new image upload fails
+        return;
       }
 
       Map<String, dynamic> data = {
@@ -205,7 +203,7 @@ class _EditItemScreenState extends State<EditItemScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Data barang berhasil diperbarui!')),
           );
-          context.pop(); // Go back to details
+          context.pop();
         }
       }).catchError((error) {
         if (mounted) {
@@ -224,56 +222,70 @@ class _EditItemScreenState extends State<EditItemScreen> {
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Edit Data Barang')),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : Form(
-              key: _formKey,
-              child: ListView(
-                padding: const EdgeInsets.all(16.0),
-                children: [
-                  _buildImagePicker(),
-                  const SizedBox(height: 24),
-                  _buildTextField(_namaBarangController, 'Nama Barang',
-                      'Masukkan nama barang'),
-                  const SizedBox(height: 16),
-                  _buildTextField(_kategoriBarangController, 'Kategori Barang',
-                      'Pilih Kategori'),
-                  const SizedBox(height: 24),
-                  Text('Detail Tambahan',
-                      style: Theme.of(context)
-                          .textTheme
-                          .titleMedium
-                          ?.copyWith(fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 16),
-                  ..._buildDynamicFields(),
-                  const SizedBox(height: 16),
-                  _buildAddNewFieldButton(),
-                ],
-              ),
-            ),
-      bottomNavigationBar: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: _isUploading
+@override
+Widget build(BuildContext context) {
+  return Stack(
+    children: [
+      Scaffold(
+        appBar: AppBar(title: const Text('Edit Data Barang')),
+        body: _isLoading
             ? const Center(child: CircularProgressIndicator())
-            : ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  minimumSize: const Size(double.infinity, 56),
+            : Form(
+                key: _formKey,
+                child: ListView(
+                  padding: const EdgeInsets.all(16.0),
+                  children: [
+                    _buildImagePicker(),
+                    const SizedBox(height: 24),
+                    _buildTextField(_namaBarangController, 'Nama Barang',
+                        'Masukkan nama barang'),
+                    const SizedBox(height: 16),
+                    _buildTextField(_kategoriBarangController, 'Kategori Barang',
+                        'Pilih Kategori'),
+                    const SizedBox(height: 24),
+                    Text('Detail Tambahan',
+                        style: Theme.of(context)
+                            .textTheme
+                            .titleMedium
+                            ?.copyWith(fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 16),
+                    ..._buildDynamicFields(),
+                    const SizedBox(height: 16),
+                    _buildAddNewFieldButton(),
+                  ],
                 ),
-                onPressed: _updateItem,
-                child: const Text('Update Data Barang'),
               ),
+        bottomNavigationBar: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              minimumSize: const Size(double.infinity, 56),
+              backgroundColor: _isUploading ? Colors.grey[700] : null,
+            ),
+            onPressed: _isUploading ? null : _updateItem,
+            child: _isUploading 
+                ? const Text("Sedang Memperbarui...") 
+                : const Text('Update Data Barang'),
+          ),
+        ),
       ),
-    );
-  }
+      if (_isUploading)
+        Container(
+          color: Colors.black.withOpacity(0.5),
+          child: const Center(
+            child: CircularProgressIndicator(
+              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+            ),
+          ),
+        ),
+    ],
+  );
+}
 
   Widget _buildImagePicker() {
     return Center(
       child: GestureDetector(
-        onTap: _pickImage,
+        onTap: _isUploading ? null : _pickImage,
         child: Container(
           height: 150,
           width: 150,
