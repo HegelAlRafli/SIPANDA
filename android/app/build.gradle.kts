@@ -25,7 +25,7 @@ android {
     defaultConfig {
         applicationId = "com.example.myapp"
         // MODIFIED: Explicitly set minSdk to 21 for better plugin compatibility
-        minSdk = 21
+        minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
