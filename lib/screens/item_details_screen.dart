@@ -1,3 +1,4 @@
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -12,11 +13,8 @@ class ItemDetailsScreen extends StatefulWidget {
 }
 
 class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
-  // MODIFIED: This function no longer needs the imageUrl
   Future<void> _deleteItem(BuildContext context) async {
     try {
-      // We only delete the document from Firestore.
-      // The image on imgbb will remain, but will no longer be referenced.
       await FirebaseFirestore.instance.collection('items').doc(widget.itemId).delete();
 
       if (!mounted) return;
@@ -34,7 +32,6 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
     }
   }
 
-  // MODIFIED: This function no longer needs the imageUrl
   void _showDeleteConfirmationDialog(BuildContext context) {
     showDialog(
       context: context,
@@ -53,7 +50,7 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
               child: const Text('Hapus', style: TextStyle(color: Colors.red)),
               onPressed: () {
                 Navigator.of(dialogContext).pop();
-                _deleteItem(context); // Call without imageUrl
+                _deleteItem(context);
               },
             ),
           ],
@@ -76,7 +73,6 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
           ),
           IconButton(
             icon: const Icon(Icons.delete),
-            // MODIFIED: We no longer need to fetch the document to get the URL
             onPressed: () {
               _showDeleteConfirmationDialog(context);
             },
@@ -100,13 +96,12 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
           final data = snapshot.data!.data() as Map<String, dynamic>;
           final details = data['details'] as List<dynamic>? ?? [];
           final imageUrl = data['imageUrl'] as String?;
+          final pemegangBarang = data['pemegangBarang'] as List<dynamic>? ?? [];
 
           return Padding(
             padding: const EdgeInsets.all(16.0),
             child: ListView(
               children: [
-                // The Image.network widget is correct and does not need changes.
-                // It will work with imgbb URLs.
                 if (imageUrl != null && imageUrl.isNotEmpty)
                   ClipRRect(
                     borderRadius: BorderRadius.circular(12.0),
@@ -160,6 +155,10 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
                   return _buildDetailRow(key, value);
                 }),
                 const Divider(height: 32),
+                // New Section for Pemegang Barang
+                if (pemegangBarang.isNotEmpty)
+                  ..._buildPemegangList(pemegangBarang),
+                
                 Center(
                   child: QrImageView(
                     data: widget.itemId,
@@ -206,5 +205,40 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
         ],
       ),
     );
+  }
+
+  List<Widget> _buildPemegangList(List<dynamic> pemegangBarang) {
+    return [
+      Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8.0),
+        child: Text("Daftar Pemegang Barang", 
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)
+        ),
+      ),
+      ...pemegangBarang.map((pemegang) {
+        final nama = pemegang['nama'] as String? ?? 'Nama tidak tersedia';
+        final imageUrl = pemegang['imageUrl'] as String?;
+
+        return Card(
+          margin: const EdgeInsets.symmetric(vertical: 8),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          elevation: 2,
+          child: ListTile(
+            leading: CircleAvatar(
+              radius: 25,
+              backgroundColor: Colors.grey[200],
+              backgroundImage: (imageUrl != null && imageUrl.isNotEmpty)
+                  ? NetworkImage(imageUrl)
+                  : null,
+              child: (imageUrl == null || imageUrl.isEmpty)
+                  ? const Icon(Icons.person, color: Colors.grey)
+                  : null,
+            ),
+            title: Text(nama, style: const TextStyle(fontWeight: FontWeight.w600)),
+          ),
+        );
+      }).toList(),
+      const Divider(height: 32),
+    ];
   }
 }
