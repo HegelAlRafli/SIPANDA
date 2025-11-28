@@ -23,7 +23,10 @@ class DefaultFirebaseOptions {
       case TargetPlatform.android:
         return android;
       case TargetPlatform.iOS:
-        return ios;
+        throw UnsupportedError(
+          'DefaultFirebaseOptions have not been configured for ios - '
+          'you can reconfigure this by running the FlutterFire CLI again.',
+        );
       case TargetPlatform.macOS:
         throw UnsupportedError(
           'DefaultFirebaseOptions have not been configured for macos - '
@@ -47,28 +50,19 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyBqF90hybWFAGOSG5f8C8xQIxvs5_06fcY',
-    appId: '1:38672009026:web:b414551a92dac74af02adb',
-    messagingSenderId: '38672009026',
-    projectId: 'qr-barangku-app',
-    authDomain: 'qr-barangku-app.firebaseapp.com',
-    storageBucket: 'qr-barangku-app.firebasestorage.app',
+    apiKey: 'AIzaSyBQ8pNsefvyTzeuqMx8KU85R2k8O6O73-Y',
+    appId: '1:373972035914:web:405b790697ea1bfa9db9b3',
+    messagingSenderId: '373972035914',
+    projectId: 'inventory-app-gratis',
+    authDomain: 'inventory-app-gratis.firebaseapp.com',
+    storageBucket: 'inventory-app-gratis.firebasestorage.app',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyDcxcLUaCcDcwVrYlchn6aiDMpP3t-XVZM',
-    appId: '1:38672009026:android:f8025013fea30835f02adb',
-    messagingSenderId: '38672009026',
-    projectId: 'qr-barangku-app',
-    storageBucket: 'qr-barangku-app.firebasestorage.app',
-  );
-
-  static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyBqYGRcAQCAyZoeNg0MxV5_ACL89Y6QWkk',
-    appId: '1:38672009026:ios:ac8048ed35ab0887f02adb',
-    messagingSenderId: '38672009026',
-    projectId: 'qr-barangku-app',
-    storageBucket: 'qr-barangku-app.firebasestorage.app',
-    iosBundleId: 'com.example.myapp',
+    apiKey: 'AIzaSyDmjZmEnoNhVTTtjVhrz2o3XRqRcU74jIE',
+    appId: '1:373972035914:android:e909e1ac76352ae99db9b3',
+    messagingSenderId: '373972035914',
+    projectId: 'inventory-app-gratis',
+    storageBucket: 'inventory-app-gratis.firebasestorage.app',
   );
 }
