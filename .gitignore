@@ -1,0 +1,66 @@
+
+# Miscellaneous
+*.class
+*.log
+*.pyc
+*.swp
+.DS_Store
+.atom/
+.buildlog/
+.history
+.svn/
+migrate_working_dir/
+/node_modules
+/web/node_modules
+npm-debug.log
+yarn-error.log
+
+# Flutter/Dart
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+/build/
+/ios/Pods/
+/ios/Flutter/App.framework
+/ios/Flutter/engine.podspec
+/ios/Flutter/flutter_export_environment.sh
+/ios/Flutter/Generated.xcconfig
+/ios/Runner/GeneratedPluginRegistrant.h
+/ios/Runner/GeneratedPluginRegistrant.m
+/ios/Flutter.podspec
+
+# Android
+/android/key.properties
+/android/local.properties
+/android/app/src/main/assets/flutter_assets/
+/android/.gradle
+/android/app/build
+/android/build
+/android/app/google-services.json
+*.apk
+*.aab
+
+# Rider
+.idea/
+
+# VS Code
+.vscode/
+.vscode/launch.json
+.vscode/settings.json
+.vscode/tasks.json
+
+# IDE specific files
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# Hidden files
+.env
+.idx/
+
+# Temporary files
+qr_barangku_project.tar.gz
