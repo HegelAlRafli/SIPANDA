@@ -39,7 +39,8 @@ final GoRouter router = GoRouter(
                 return const Scaffold(
                     body: Center(child: Text("Error: QR Data is missing.")));
               }
-              return QRCodeScreen(qrData: qrData);
+              // CORRECTED: Pass the data to the 'itemId' parameter
+              return QrCodeScreen(itemId: qrData);
             },
           ),
           GoRoute(
