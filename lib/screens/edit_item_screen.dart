@@ -1,9 +1,10 @@
 
+import 'dart:convert';
 import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import 'dart:developer' as developer;
 import 'package:myapp/models/dynamic_field_model.dart';
@@ -21,6 +22,8 @@ class _EditItemScreenState extends State<EditItemScreen> {
   late TextEditingController _namaBarangController;
   late TextEditingController _kategoriBarangController;
   final List<DynamicFieldControllers> _dynamicFieldControllers = [];
+
+  final String _imgbbApiKey = "062dd36a9ba0bd8ec04a44ecd3fe896b";
 
   XFile? _imageFile;
   String? _existingImageUrl;
@@ -74,9 +77,10 @@ class _EditItemScreenState extends State<EditItemScreen> {
       }
     } catch (e) {
       developer.log('Error fetching item data: $e', name: 'EditItemScreen');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Gagal memuat data barang: $e')),
-      );
+      if (mounted)
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Gagal memuat data barang: $e')),
+        );
     } finally {
       if (mounted) {
         setState(() {
@@ -116,32 +120,51 @@ class _EditItemScreenState extends State<EditItemScreen> {
   }
 
   Future<String?> _uploadImage(String itemId) async {
+    // If no new image is picked, keep the existing one.
     if (_imageFile == null) return _existingImageUrl;
 
+    // A new image has been picked, upload it to imgbb.
+    var request = http.MultipartRequest(
+        'POST', Uri.parse('https://api.imgbb.com/1/upload'));
+
+    request.fields['key'] = _imgbbApiKey;
+
+    request.files.add(
+      await http.MultipartFile.fromPath('image', _imageFile!.path),
+    );
+
     try {
-      // Delete old image if it exists
-      if (_existingImageUrl != null && _existingImageUrl!.isNotEmpty) {
-        try {
-          await FirebaseStorage.instance.refFromURL(_existingImageUrl!).delete();
-        } catch (e) {
-          developer.log('Failed to delete old image: $e', name: 'EditItemScreen');
+      var response = await request.send();
+
+      if (response.statusCode == 200) {
+        final respStr = await response.stream.bytesToString();
+        final json = jsonDecode(respStr);
+        final imageUrl = json['data']['url'];
+        developer.log("New image uploaded to imgbb: $imageUrl",
+            name: "EditItemScreen");
+        return imageUrl;
+      } else {
+        final errorBody = await response.stream.bytesToString();
+        developer.log(
+            "Image upload failed with status ${response.statusCode}: $errorBody",
+            name: "EditItemScreen");
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+                content: Text(
+                    "Gagal mengunggah gambar baru: ${response.reasonPhrase}")),
+          );
         }
+        return null; // Return null on failure
       }
-      // Upload new image
-      final ref = FirebaseStorage.instance
-          .ref()
-          .child('item_images')
-          .child('$itemId.jpg');
-      await ref.putFile(File(_imageFile!.path));
-      return await ref.getDownloadURL();
     } catch (e) {
-      developer.log('Image upload failed: $e', name: 'EditItemScreen');
-      if(mounted){
+      developer.log("Image upload failed: $e", name: "EditItemScreen");
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Gagal mengunggah gambar: $e')),
+          SnackBar(content: Text("Gagal mengunggah gambar baru: $e")),
         );
       }
-      return null;
+      return null; // Return null on failure
     }
   }
 
@@ -152,13 +175,12 @@ class _EditItemScreenState extends State<EditItemScreen> {
       });
 
       String? newImageUrl = await _uploadImage(widget.itemId);
-       if (_imageFile != null && newImageUrl == null) {
-          setState(() {
-            _isUploading = false;
-          });
-          return; // Stop if new image upload fails
+      if (_imageFile != null && newImageUrl == null) {
+        setState(() {
+          _isUploading = false;
+        });
+        return; // Stop if new image upload fails
       }
-
 
       Map<String, dynamic> data = {
         'id': widget.itemId,
@@ -179,15 +201,19 @@ class _EditItemScreenState extends State<EditItemScreen> {
           .doc(widget.itemId)
           .update(data)
           .then((_) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Data barang berhasil diperbarui!')),
-            );
-            context.pop(); // Go back to details
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Data barang berhasil diperbarui!')),
+          );
+          context.pop(); // Go back to details
+        }
       }).catchError((error) {
-        developer.log('Failed to update data: $error', name: 'EditItemScreen');
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Gagal memperbarui data: $error')),
-        );
+        if (mounted) {
+          developer.log('Failed to update data: $error', name: 'EditItemScreen');
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Gagal memperbarui data: $error')),
+          );
+        }
       }).whenComplete(() {
         if (mounted) {
           setState(() {
@@ -211,9 +237,11 @@ class _EditItemScreenState extends State<EditItemScreen> {
                 children: [
                   _buildImagePicker(),
                   const SizedBox(height: 24),
-                  _buildTextField(_namaBarangController, 'Nama Barang', 'Masukkan nama barang'),
+                  _buildTextField(_namaBarangController, 'Nama Barang',
+                      'Masukkan nama barang'),
                   const SizedBox(height: 16),
-                  _buildTextField(_kategoriBarangController, 'Kategori Barang', 'Pilih Kategori'),
+                  _buildTextField(_kategoriBarangController, 'Kategori Barang',
+                      'Pilih Kategori'),
                   const SizedBox(height: 24),
                   Text('Detail Tambahan',
                       style: Theme.of(context)
@@ -262,14 +290,22 @@ class _EditItemScreenState extends State<EditItemScreen> {
               : (_existingImageUrl != null && _existingImageUrl!.isNotEmpty
                   ? ClipRRect(
                       borderRadius: BorderRadius.circular(14),
-                      child: Image.network(_existingImageUrl!, fit: BoxFit.cover),
+                      child: Image.network(_existingImageUrl!, fit: BoxFit.cover, 
+                        errorBuilder: (context, error, stackTrace) => const Icon(Icons.broken_image, size: 48, color: Colors.grey), 
+                        loadingBuilder: (context, child, loadingProgress) {
+                          if(loadingProgress == null) return child;
+                          return const Center(child: CircularProgressIndicator());
+                        }
+                      ),
                     )
                   : Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.camera_alt, color: Colors.grey[600], size: 40),
+                        Icon(Icons.camera_alt,
+                            color: Colors.grey[600], size: 40),
                         const SizedBox(height: 8),
-                        Text('Pilih Gambar', style: TextStyle(color: Colors.grey[700])),
+                        Text('Pilih Gambar',
+                            style: TextStyle(color: Colors.grey[700])),
                       ],
                     )),
         ),
@@ -285,9 +321,13 @@ class _EditItemScreenState extends State<EditItemScreen> {
         padding: const EdgeInsets.only(bottom: 16.0),
         child: Row(
           children: [
-            Expanded(child: _buildTextField(controllers.keyController, 'Contoh: Warna', 'Key')),
+            Expanded(
+                child: _buildTextField(
+                    controllers.keyController, 'Contoh: Warna', 'Key')),
             const SizedBox(width: 16),
-            Expanded(child: _buildTextField(controllers.valueController, 'Contoh: Merah', 'Value')),
+            Expanded(
+                child: _buildTextField(
+                    controllers.valueController, 'Contoh: Merah', 'Value')),
             IconButton(
               icon: const Icon(Icons.delete, color: Colors.red),
               onPressed: () => _removeDynamicField(index),
@@ -315,7 +355,8 @@ class _EditItemScreenState extends State<EditItemScreen> {
     );
   }
 
-  Widget _buildTextField(TextEditingController controller, String label, String hint) {
+  Widget _buildTextField(
+      TextEditingController controller, String label, String hint) {
     return TextFormField(
       controller: controller,
       decoration: InputDecoration(
@@ -324,11 +365,13 @@ class _EditItemScreenState extends State<EditItemScreen> {
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(16.0)),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16.0),
-          borderSide: BorderSide(color: Theme.of(context).colorScheme.primary, width: 2),
+          borderSide:
+              BorderSide(color: Theme.of(context).colorScheme.primary, width: 2),
         ),
       ),
       validator: (value) {
-        if (controller == _namaBarangController || controller == _kategoriBarangController) {
+        if (controller == _namaBarangController ||
+            controller == _kategoriBarangController) {
           if (value == null || value.isEmpty) {
             return '$label tidak boleh kosong';
           }

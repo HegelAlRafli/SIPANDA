@@ -1,5 +1,4 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:qr_flutter/qr_flutter.dart';
@@ -13,34 +12,30 @@ class ItemDetailsScreen extends StatefulWidget {
 }
 
 class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
-  Future<void> _deleteItem(BuildContext context, String imageUrl) async {
+  // MODIFIED: This function no longer needs the imageUrl
+  Future<void> _deleteItem(BuildContext context) async {
     try {
-      // 1. Delete image from Storage
-      if (imageUrl.isNotEmpty) {
-        final imageRef = FirebaseStorage.instance.refFromURL(imageUrl);
-        await imageRef.delete();
-      }
-
-      // 2. Delete document from Firestore
+      // We only delete the document from Firestore.
+      // The image on imgbb will remain, but will no longer be referenced.
       await FirebaseFirestore.instance.collection('items').doc(widget.itemId).delete();
 
-      if (!mounted) return; // Check if the widget is still in the tree
+      if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Barang berhasil dihapus')),
       );
 
-      // 3. Navigate back
       context.go('/item_list');
     } catch (e) {
-      if (!mounted) return; // Check if the widget is still in the tree
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Gagal menghapus barang: $e')),
       );
     }
   }
 
-  void _showDeleteConfirmationDialog(BuildContext context, String imageUrl) {
+  // MODIFIED: This function no longer needs the imageUrl
+  void _showDeleteConfirmationDialog(BuildContext context) {
     showDialog(
       context: context,
       builder: (BuildContext dialogContext) {
@@ -57,8 +52,8 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
             TextButton(
               child: const Text('Hapus', style: TextStyle(color: Colors.red)),
               onPressed: () {
-                Navigator.of(dialogContext).pop(); // Close the dialog
-                _deleteItem(context, imageUrl);
+                Navigator.of(dialogContext).pop();
+                _deleteItem(context); // Call without imageUrl
               },
             ),
           ],
@@ -81,21 +76,9 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
           ),
           IconButton(
             icon: const Icon(Icons.delete),
+            // MODIFIED: We no longer need to fetch the document to get the URL
             onPressed: () {
-              // Fetch the image URL before showing the dialog
-              FirebaseFirestore.instance
-                  .collection('items')
-                  .doc(widget.itemId)
-                  .get()
-                  .then((doc) {
-                if (doc.exists) {
-                  final data = doc.data() as Map<String, dynamic>;
-                  final imageUrl = data['imageUrl'] as String? ?? '';
-                   if (mounted) {
-                     _showDeleteConfirmationDialog(context, imageUrl);
-                   }
-                }
-              });
+              _showDeleteConfirmationDialog(context);
             },
           ),
         ],
@@ -122,7 +105,9 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
             padding: const EdgeInsets.all(16.0),
             child: ListView(
               children: [
-                if (imageUrl != null)
+                // The Image.network widget is correct and does not need changes.
+                // It will work with imgbb URLs.
+                if (imageUrl != null && imageUrl.isNotEmpty)
                   ClipRRect(
                     borderRadius: BorderRadius.circular(12.0),
                     child: Image.network(
@@ -141,11 +126,19 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
                       errorBuilder: (context, error, stackTrace) {
                         return const SizedBox(
                             height: 250,
-                            child: Icon(Icons.broken_image,
-                                size: 48, color: Colors.grey));
+                            child: Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(Icons.broken_image, size: 48, color: Colors.grey),
+                                  SizedBox(height: 8),
+                                  Text("Gagal memuat gambar", style: TextStyle(color: Colors.grey))
+                                ],
+                              ),
+                            ));
                       },
                     ),
-                  ),
+                  ) else const SizedBox(height: 250, child: Center(child: Icon(Icons.image_not_supported, size: 48, color: Colors.grey))),
                 const SizedBox(height: 24),
                 Text(data['namaBarang'] ?? 'Tanpa Nama',
                     style: Theme.of(context)
@@ -167,10 +160,9 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
                   return _buildDetailRow(key, value);
                 }),
                 const Divider(height: 32),
-                // --- QR CODE SECTION ---
                 Center(
                   child: QrImageView(
-                    data: widget.itemId, // The QR code data is the item ID itself
+                    data: widget.itemId,
                     version: QrVersions.auto,
                     size: 200.0,
                   ),
@@ -186,7 +178,6 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
                         ?.copyWith(color: Colors.grey[600]),
                   ),
                 ),
-                // --- END QR CODE SECTION ---
               ],
             ),
           );
