@@ -68,15 +68,6 @@ class _AddItemScreenState extends State<AddItemScreen> {
   Future<String?> _uploadImage(String itemId) async {
     if (_imageFile == null) return null;
 
-    if (_imgbbApiKey == "MASUKKAN_API_KEY_IMGBB_ANDA_DI_SINI") {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content: Text(
-                "API Key imgbb belum dimasukkan. Silakan edit file add_item_screen.dart.")),
-      );
-      return null;
-    }
-
     var request = http.MultipartRequest(
         'POST', Uri.parse('https://api.imgbb.com/1/upload'));
 
@@ -101,6 +92,7 @@ class _AddItemScreenState extends State<AddItemScreen> {
         developer.log(
             "Image upload failed with status ${response.statusCode}: $errorBody",
             name: "AddItemScreen");
+        if (mounted)
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
               content:
@@ -110,6 +102,7 @@ class _AddItemScreenState extends State<AddItemScreen> {
       }
     } catch (e) {
       developer.log("Image upload failed: $e", name: "AddItemScreen");
+       if (mounted)
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Gagal mengunggah gambar: $e")),
       );
@@ -150,12 +143,12 @@ class _AddItemScreenState extends State<AddItemScreen> {
             .toList(),
       };
 
-      // Save data first
       await docRef.set(data).then((_) {
-        // Navigate on success
+        if (mounted)
         context.goNamed('qr_code', extra: docRef.id);
       }).catchError((error) {
         developer.log("Failed to save data: $error", name: "AddItemScreen");
+        if (mounted)
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text("Gagal menyimpan data: $error")),
         );
@@ -169,49 +162,63 @@ class _AddItemScreenState extends State<AddItemScreen> {
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Tambah Data Barang Baru')),
-      body: Form(
-        key: _formKey,
-        child: ListView(
+ @override
+Widget build(BuildContext context) {
+  return Stack(
+    children: [
+      Scaffold(
+        appBar: AppBar(title: const Text('Tambah Data Barang Baru')),
+        body: Form(
+          key: _formKey,
+          child: ListView(
+            padding: const EdgeInsets.all(16.0),
+            children: [
+              _buildImagePicker(),
+              const SizedBox(height: 24),
+              _buildTextField(
+                  _namaBarangController, 'Nama Barang', 'Masukkan nama barang'),
+              const SizedBox(height: 16),
+              _buildTextField(
+                  _kategoriBarangController, 'Kategori Barang', 'Pilih Kategori'),
+              const SizedBox(height: 24),
+              Text("Detail Tambahan",
+                  style: Theme.of(context)
+                      .textTheme
+                      .titleMedium
+                      ?.copyWith(fontWeight: FontWeight.bold)),
+              const SizedBox(height: 16),
+              ..._buildDynamicFields(),
+              const SizedBox(height: 16),
+              _buildAddNewFieldButton(),
+            ],
+          ),
+        ),
+        bottomNavigationBar: Padding(
           padding: const EdgeInsets.all(16.0),
-          children: [
-            _buildImagePicker(),
-            const SizedBox(height: 24),
-            _buildTextField(
-                _namaBarangController, 'Nama Barang', 'Masukkan nama barang'),
-            const SizedBox(height: 16),
-            _buildTextField(
-                _kategoriBarangController, 'Kategori Barang', 'Pilih Kategori'),
-            const SizedBox(height: 24),
-            Text("Detail Tambahan",
-                style: Theme.of(context)
-                    .textTheme
-                    .titleMedium
-                    ?.copyWith(fontWeight: FontWeight.bold)),
-            const SizedBox(height: 16),
-            ..._buildDynamicFields(),
-            const SizedBox(height: 16),
-            _buildAddNewFieldButton(),
-          ],
+          child: ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              minimumSize: const Size(double.infinity, 56),
+              backgroundColor: _isUploading ? Colors.grey[700] : null,
+            ),
+            onPressed: _isUploading ? null : _generateQRCode,
+            child: _isUploading 
+                ? const Text("Sedang Mengunggah...") 
+                : const Text('Generate QR Code'),
+          ),
         ),
       ),
-      bottomNavigationBar: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: _isUploading
-            ? const Center(child: CircularProgressIndicator())
-            : ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  minimumSize: const Size(double.infinity, 56),
-                ),
-                onPressed: _generateQRCode,
-                child: const Text('Generate QR Code'),
-              ),
-      ),
-    );
-  }
+      if (_isUploading)
+        Container(
+          color: Colors.black.withOpacity(0.5),
+          child: const Center(
+            child: CircularProgressIndicator(
+              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+            ),
+          ),
+        ),
+    ],
+  );
+}
 
   Widget _buildImagePicker() {
     return Center(
