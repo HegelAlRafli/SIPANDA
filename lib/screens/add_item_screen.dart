@@ -1,9 +1,10 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import 'dart:developer' as developer;
 
@@ -20,6 +21,8 @@ class _AddItemScreenState extends State<AddItemScreen> {
   final _namaBarangController = TextEditingController();
   final _kategoriBarangController = TextEditingController();
   final List<DynamicFieldControllers> _dynamicFieldControllers = [];
+
+  final String _imgbbApiKey = "062dd36a9ba0bd8ec04a44ecd3fe896b";
 
   XFile? _imageFile;
   bool _isUploading = false;
@@ -65,13 +68,46 @@ class _AddItemScreenState extends State<AddItemScreen> {
   Future<String?> _uploadImage(String itemId) async {
     if (_imageFile == null) return null;
 
+    if (_imgbbApiKey == "MASUKKAN_API_KEY_IMGBB_ANDA_DI_SINI") {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+            content: Text(
+                "API Key imgbb belum dimasukkan. Silakan edit file add_item_screen.dart.")),
+      );
+      return null;
+    }
+
+    var request = http.MultipartRequest(
+        'POST', Uri.parse('https://api.imgbb.com/1/upload'));
+
+    request.fields['key'] = _imgbbApiKey;
+
+    request.files.add(
+      await http.MultipartFile.fromPath('image', _imageFile!.path),
+    );
+
     try {
-      final ref = FirebaseStorage.instance
-          .ref()
-          .child('item_images')
-          .child('$itemId.jpg');
-      await ref.putFile(File(_imageFile!.path));
-      return await ref.getDownloadURL();
+      var response = await request.send();
+
+      if (response.statusCode == 200) {
+        final respStr = await response.stream.bytesToString();
+        final json = jsonDecode(respStr);
+        final imageUrl = json['data']['url'];
+        developer.log("Image uploaded to imgbb: $imageUrl",
+            name: "AddItemScreen");
+        return imageUrl;
+      } else {
+        final errorBody = await response.stream.bytesToString();
+        developer.log(
+            "Image upload failed with status ${response.statusCode}: $errorBody",
+            name: "AddItemScreen");
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content:
+                  Text("Gagal mengunggah gambar: ${response.reasonPhrase}")),
+        );
+        return null;
+      }
     } catch (e) {
       developer.log("Image upload failed: $e", name: "AddItemScreen");
       ScaffoldMessenger.of(context).showSnackBar(
