@@ -9,7 +9,7 @@ class HomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('QR Barangku'),
+        title: const Text('Aplikasi Manajemen Inventaris'),
         leading: const SizedBox(width: 48), // Placeholder for balance
         actions: [
           IconButton(
@@ -26,38 +26,21 @@ class HomeScreen extends StatelessWidget {
           children: [
             HomeCard(
               icon: Icons.qr_code,
-              title: 'Generate QR Barang',
-              subtitle: 'Buat kode QR untuk barang Anda.',
+              title: 'Buat Kode QR Baru',
+              subtitle: 'Buat dan cetak kode QR unik untuk setiap barang Anda.',
               buttonText: 'Buat QR',
               onPressed: () => context.go('/add_item'),
             ),
             const SizedBox(height: 16),
             HomeCard(
               icon: Icons.qr_code_scanner,
-              title: 'Scan QR Barang',
-              subtitle: 'Pindai kode QR untuk melihat detail barang.',
+              title: 'Pindai Kode QR',
+              subtitle: 'Pindai kode QR untuk memperbarui atau melihat detail inventaris.',
               buttonText: 'Pindai',
               onPressed: () => context.go('/scan_qr'),
             ),
           ],
         ),
-      ),
-      bottomNavigationBar: BottomNavigationBar(
-        items: const <BottomNavigationBarItem>[
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-          BottomNavigationBarItem(
-              icon: Icon(Icons.view_list), label: 'Daftar Barang'),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profil'),
-        ],
-        currentIndex: 0,
-        type: BottomNavigationBarType.fixed,
-        selectedItemColor: Theme.of(context).colorScheme.primary,
-        unselectedItemColor: Colors.grey,
-        onTap: (index) {
-          if (index == 1) {
-            context.go('/item_list');
-          }
-        },
       ),
     );
   }
