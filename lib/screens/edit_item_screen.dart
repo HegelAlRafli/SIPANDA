@@ -237,7 +237,7 @@ Widget build(BuildContext context) {
                   const SizedBox(height: 16),
                   _buildAddNewFieldButton(),
                   const Divider(height: 32),
-                                    Text("Pemegang Barang", style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+Text("Pemegang Barang", style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
                   const SizedBox(height: 16),
                   ..._buildPemegangFields(),
                   const SizedBox(height: 16),
