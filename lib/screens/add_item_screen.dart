@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:dotted_border/dotted_border.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:http/http.dart' as http;
@@ -155,7 +156,9 @@ class _AddItemScreenState extends State<AddItemScreen> {
         if (pemegangImageUrl == null) {
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text("Gagal mengunggah gambar untuk ${pemegang.nameController.text}.")),
+              SnackBar(
+                  content: Text(
+                      "Gagal mengunggah gambar untuk ${pemegang.nameController.text}.")),
             );
           }
         }
@@ -201,116 +204,98 @@ class _AddItemScreenState extends State<AddItemScreen> {
     });
   }
 
- @override
-Widget build(BuildContext context) {
-  return Stack(
-    children: [
-      Scaffold(
-        appBar: AppBar(title: const Text('Tambah Data Barang Baru')),
-        body: Form(
-          key: _formKey,
-          child: ListView(
-            padding: const EdgeInsets.all(16.0),
-            children: [
-              _buildImagePicker(
-                isMainImage: true,
-                onImagePicked: (file) => setState(() => _itemImageFile = file),
-                imageFile: _itemImageFile,
-              ),
-              const SizedBox(height: 24),
-              _buildTextField(
-                  _namaBarangController, 'Nama Barang', 'Masukkan nama barang', isRequired: true),
-              const SizedBox(height: 16),
-              _buildTextField(
-                  _kategoriBarangController, 'Kategori Barang', 'Pilih Kategori', isRequired: true),
-              const SizedBox(height: 24),
-              const Divider(),
-              const SizedBox(height: 16),
-              Text("Detail Tambahan",
-                  style: Theme.of(context)
-                      .textTheme
-                      .titleMedium
-                      ?.copyWith(fontWeight: FontWeight.bold)),
-              const SizedBox(height: 16),
-              ..._buildDynamicFields(),
-              const SizedBox(height: 16),
-              _buildAddNewFieldButton(),
-              const SizedBox(height: 24),
-              const Divider(),
-              const SizedBox(height: 16),
-               Text("Pemegang Barang",
-                  style: Theme.of(context)
-                      .textTheme
-                      .titleMedium
-                      ?.copyWith(fontWeight: FontWeight.bold)),
-              const SizedBox(height: 16),
-              ..._buildPemegangFields(),
-              const SizedBox(height: 16),
-              _buildAddPemegangButton(),
-
-            ],
-          ),
-        ),
-        bottomNavigationBar: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              minimumSize: const Size(double.infinity, 56),
-              backgroundColor: _isUploading ? Colors.grey[700] : null,
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      children: [
+        Scaffold(
+          backgroundColor: const Color(0xFFF7F8FC),
+          appBar: AppBar(
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back, color: Colors.black),
+              onPressed: () => context.pop(),
             ),
-            onPressed: _isUploading ? null : _generateQRCode,
-            child: Text(_isUploading ? "Menyimpan Data..." : 'Generate QR Code'),
-          ),
-        ),
-      ),
-      if (_isUploading)
-        Container(
-          color: Colors.black.withOpacity(0.5),
-          child: const Center(
-            child: CircularProgressIndicator(
-              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+            title: const Text(
+              'Tambah Data Barang Baru',
+              style:
+                  TextStyle(fontWeight: FontWeight.bold, color: Colors.black),
             ),
+            centerTitle: true,
+            backgroundColor: Colors.transparent,
+            elevation: 0,
           ),
-        ),
-    ],
-  );
-}
-
-  Widget _buildImagePicker({
-    required bool isMainImage,
-    required Function(XFile?) onImagePicked,
-    XFile? imageFile,
-  }) {
-    return Center(
-      child: GestureDetector(
-        onTap: () async {
-          final file = await _pickImage();
-          onImagePicked(file);
-        },
-        child: Container(
-          height: isMainImage ? 150 : 100,
-          width: isMainImage ? 150 : 100,
-          decoration: BoxDecoration(
-            color: Colors.grey[200],
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.grey[400]!, width: 2),
-          ),
-          child: imageFile != null
-              ? ClipRRect(
-                  borderRadius: BorderRadius.circular(14),
-                  child: Image.file(File(imageFile.path), fit: BoxFit.cover),
-                )
-              : Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.camera_alt, color: Colors.grey[600], size: isMainImage ? 40 : 30),
-                    const SizedBox(height: 8),
-                    Text("Pilih Gambar",
-                        textAlign: TextAlign.center,
-                        style: TextStyle(fontSize: isMainImage ? 14: 12, color: Colors.grey[700])),
-                  ],
+          body: Form(
+            key: _formKey,
+            child: ListView(
+              padding: const EdgeInsets.all(20.0),
+              children: [
+                _buildLabel('Nama Barang'),
+                _buildTextField(_namaBarangController, 'Masukkan nama barang',
+                    isRequired: true),
+                const SizedBox(height: 20),
+                _buildLabel('Kategori Barang'),
+                _buildTextField(_kategoriBarangController, 'Pilih Kategori',
+                    isRequired: true),
+                const SizedBox(height: 30),
+                _buildLabel('Detail Tambahan'),
+                ..._buildDynamicFields(),
+                const SizedBox(height: 10),
+                _buildDashedButton(
+                  onPressed: _addDynamicField,
+                  text: 'Tambah Field Baru',
+                  icon: Icons.add_circle,
                 ),
+                const SizedBox(height: 30),
+                _buildLabel('Pemegang barang'),
+                ..._buildPemegangFields(),
+                const SizedBox(height: 10),
+                _buildDashedButton(
+                  onPressed: _addPemegangField,
+                  text: 'Tambah Pemegang barang',
+                  icon: Icons.add_circle,
+                ),
+              ],
+            ),
+          ),
+          bottomNavigationBar: Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                minimumSize: const Size(double.infinity, 56),
+                backgroundColor: Theme.of(context).primaryColor,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16.0),
+                ),
+              ),
+              onPressed: _isUploading ? null : _generateQRCode,
+              child: Text(
+                _isUploading ? "Menyimpan Data..." : 'Generate QR Code',
+                style:
+                    const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+            ),
+          ),
         ),
+        if (_isUploading)
+          Container(
+            color: Colors.black.withOpacity(0.5),
+            child: const Center(
+              child: CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildLabel(String text) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 4.0, bottom: 8.0),
+      child: Text(
+        text,
+        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
       ),
     );
   }
@@ -320,20 +305,18 @@ Widget build(BuildContext context) {
       int index = entry.key;
       var controllers = entry.value;
       return Padding(
-        padding: const EdgeInsets.only(bottom: 16.0),
+        padding: const EdgeInsets.only(bottom: 12.0),
         child: Row(
           children: [
             Expanded(
                 child: _buildTextField(
-                    controllers.keyController, 'Contoh: Warna', 'Key')),
-            const SizedBox(width: 16),
+                    controllers.keyController, 'Contoh: Warna')),
+            const SizedBox(width: 12),
             Expanded(
                 child: _buildTextField(
-                    controllers.valueController, 'Contoh: Merah', 'Value')),
-            IconButton(
-              icon: const Icon(Icons.delete, color: Colors.red),
-              onPressed: () => _removeDynamicField(index),
-            )
+                    controllers.valueController, 'Contoh: Merah')),
+            const SizedBox(width: 8),
+            _buildDeleteButton(() => _removeDynamicField(index)),
           ],
         ),
       );
@@ -346,90 +329,101 @@ Widget build(BuildContext context) {
       var pemegang = entry.value;
       return Padding(
         key: pemegang.key,
-        padding: const EdgeInsets.only(bottom: 16.0),
-        child: Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            border: Border.all(color: Colors.grey.shade300),
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-               _buildImagePicker(
-                  isMainImage: false,
-                  imageFile: pemegang.imageFile,
-                  onImagePicked: (file) {
-                    setState(() {
-                      pemegang.imageFile = file;
-                    });
-                  },
-                ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: _buildTextField(pemegang.nameController, 'Nama Pemegang', 'Masukkan nama', isRequired: true)
-              ),
-              IconButton(
-                icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
-                onPressed: () => _removePemegangField(index),
-              )
-            ],
-          ),
+        padding: const EdgeInsets.only(bottom: 12.0),
+        child: Row(
+          children: [
+            Expanded(
+              child: _buildTextField(pemegang.nameController, 'Nama Pemegang',
+                  isRequired: true),
+            ),
+            const SizedBox(width: 8),
+            _buildDeleteButton(() => _removePemegangField(index)),
+          ],
         ),
       );
     }).toList();
   }
 
-  Widget _buildAddNewFieldButton() {
-    return OutlinedButton.icon(
-      style: OutlinedButton.styleFrom(
-        minimumSize: const Size(double.infinity, 50),
-        foregroundColor: Theme.of(context).colorScheme.primary,
-        side: BorderSide(
-            width: 1.5,
-            color: Theme.of(context).colorScheme.primary.withOpacity(0.7)),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+  Widget _buildDeleteButton(VoidCallback onPressed) {
+    return InkWell(
+      onTap: onPressed,
+      borderRadius: BorderRadius.circular(20),
+      child: Container(
+        width: 40,
+        height: 40,
+        decoration: BoxDecoration(
+          color: Colors.red.withOpacity(0.1),
+          shape: BoxShape.circle,
+        ),
+        child: const Icon(Icons.delete, color: Colors.red, size: 22),
       ),
-      icon: const Icon(Icons.add),
-      label: const Text('Tambah Field Baru'),
-      onPressed: _addDynamicField,
     );
   }
 
-  Widget _buildAddPemegangButton() {
-    return OutlinedButton.icon(
-      style: OutlinedButton.styleFrom(
-        minimumSize: const Size(double.infinity, 50),
-        foregroundColor: Theme.of(context).colorScheme.secondary,
-         side: BorderSide(
-            width: 1.5,
-            color: Theme.of(context).colorScheme.secondary.withOpacity(0.7)),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+  Widget _buildDashedButton(
+      {required VoidCallback onPressed,
+      required String text,
+      required IconData icon}) {
+    return DottedBorder(
+      options: RectDottedBorderOptions(
+        color: Theme.of(context).primaryColor,
+        strokeWidth: 1.5,
+        dashPattern: const [8, 4],
       ),
-      icon: const Icon(Icons.person_add_alt_1),
-      label: const Text('Tambah Pemegang Barang'),
-      onPressed: _addPemegangField,
+      child: InkWell(
+        onTap: onPressed,
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          height: 56,
+          alignment: Alignment.center,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, color: Theme.of(context).primaryColor, size: 22),
+              const SizedBox(width: 10),
+              Text(
+                text,
+                style: TextStyle(
+                  color: Theme.of(context).primaryColor,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
-  Widget _buildTextField(
-      TextEditingController controller, String label, String hint, {bool isRequired = false}) {
+  Widget _buildTextField(TextEditingController controller, String hint,
+      {bool isRequired = false}) {
     return TextFormField(
       controller: controller,
       decoration: InputDecoration(
-        labelText: label,
         hintText: hint,
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12.0)),
+        fillColor: Colors.white,
+        filled: true,
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16.0),
+          borderSide: BorderSide.none,
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16.0),
+          borderSide: BorderSide.none,
+        ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12.0),
-          borderSide: BorderSide(
-              color: Theme.of(context).colorScheme.primary, width: 2),
+          borderRadius: BorderRadius.circular(16.0),
+          borderSide:
+              BorderSide(color: Theme.of(context).primaryColor, width: 2),
         ),
       ),
       validator: (value) {
         if (isRequired) {
           if (value == null || value.isEmpty) {
-            return '$label tidak boleh kosong';
+            return '$hint tidak boleh kosong';
           }
         }
         return null;

@@ -27,12 +27,13 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const Color primarySeedColor = Color(0xFF4A43EC);
+    const Color primarySeedColor = Color(0xFF155BFB);
 
     final TextTheme appTextTheme = TextTheme(
       displayLarge:
           GoogleFonts.poppins(fontSize: 57, fontWeight: FontWeight.bold),
-      titleLarge: GoogleFonts.poppins(fontSize: 22, fontWeight: FontWeight.w500),
+      titleLarge:
+          GoogleFonts.poppins(fontSize: 22, fontWeight: FontWeight.w500),
       bodyMedium: GoogleFonts.poppins(fontSize: 14),
     );
 
@@ -55,7 +56,8 @@ class MyApp extends StatelessWidget {
           backgroundColor: primarySeedColor,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-          textStyle: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w500),
+          textStyle:
+              GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w500),
         ),
       ),
     );
@@ -68,18 +70,19 @@ class MyApp extends StatelessWidget {
       ),
       textTheme: appTextTheme,
       appBarTheme: AppBarTheme(
-        backgroundColor: Colors.grey[900],
+        backgroundColor: const Color(0xFF003366),
         foregroundColor: Colors.white,
         titleTextStyle:
             GoogleFonts.poppins(fontSize: 24, fontWeight: FontWeight.bold),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          foregroundColor: Colors.black,
+          foregroundColor: Colors.white,
           backgroundColor: primarySeedColor,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-          textStyle: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w500),
+          textStyle:
+              GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w500),
         ),
       ),
     );
@@ -87,11 +90,12 @@ class MyApp extends StatelessWidget {
     return Consumer<ThemeProvider>(
       builder: (context, themeProvider, child) {
         return MaterialApp.router(
-          title: 'QR Barangku',
+          title: 'SIPANDA',
           theme: lightTheme,
           darkTheme: darkTheme,
           themeMode: themeProvider.themeMode,
           routerConfig: router, // Use the router from app_router.dart
+          debugShowCheckedModeBanner: false,
         );
       },
     );
