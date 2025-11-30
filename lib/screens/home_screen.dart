@@ -35,7 +35,7 @@ class HomeScreen extends StatelessWidget {
               title: 'Generate QR Barang',
               subtitle: 'Buat kode QR untuk barang Anda.',
               buttonText: 'Buat QR',
-              onPressed: () => context.go('/add-item'),
+              onPressed: () => context.go('/add_item'),
             ),
             const SizedBox(height: 20),
             HomeActionCard(
@@ -43,7 +43,7 @@ class HomeScreen extends StatelessWidget {
               title: 'Scan QR Barang',
               subtitle: 'Pindai kode QR untuk melihat detail barang.',
               buttonText: 'Pindai',
-              onPressed: () => context.go('/scan-qr'),
+              onPressed: () => context.go('/scan_qr'),
             ),
           ],
         ),

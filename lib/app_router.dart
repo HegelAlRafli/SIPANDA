@@ -21,6 +21,7 @@ final GoRouter router = GoRouter(
     ),
   ),
   routes: <RouteBase>[
+    // Main navigation routes
     StatefulShellRoute.indexedStack(
       builder: (context, state, navigationShell) {
         return ScaffoldWithNavBar(navigationShell: navigationShell);
@@ -33,60 +34,6 @@ final GoRouter router = GoRouter(
               builder: (BuildContext context, GoRouterState state) {
                 return const HomeScreen();
               },
-              routes: <RouteBase>[
-                GoRoute(
-                  path: 'add_item',
-                  builder: (BuildContext context, GoRouterState state) {
-                    return const AddItemScreen();
-                  },
-                ),
-                GoRoute(
-                  path: 'qr_code',
-                  name: 'qr_code',
-                  builder: (BuildContext context, GoRouterState state) {
-                    final qrData = state.extra as String?;
-                    if (qrData == null) {
-                      return const Scaffold(
-                          body:
-                              Center(child: Text("Error: QR Data is missing.")));
-                    }
-                    return QrCodeScreen(itemId: qrData);
-                  },
-                ),
-                GoRoute(
-                  path: 'scan_qr',
-                  builder: (BuildContext context, GoRouterState state) {
-                    return const ScanQRScreen();
-                  },
-                ),
-                GoRoute(
-                    path: 'item_details/:itemId',
-                    name: 'item_details',
-                    builder: (BuildContext context, GoRouterState state) {
-                      final itemId = state.pathParameters['itemId'];
-                      if (itemId == null) {
-                        return const Scaffold(
-                            body: Center(
-                                child: Text("Error: Item ID is missing.")));
-                      }
-                      return ItemDetailsScreen(itemId: itemId);
-                    },
-                    routes: [
-                      GoRoute(
-                        path: 'edit',
-                        name: 'edit_item',
-                        builder: (BuildContext context, GoRouterState state) {
-                          final itemId = state.pathParameters['itemId'];
-                          if (itemId == null) {
-                            return const Scaffold(
-                                body: Center(
-                                    child: Text("Error: Item ID is missing.")));
-                          }
-                          return EditItemScreen(itemId: itemId);
-                        },
-                      ),
-                    ]),
-              ],
             ),
           ],
         ),
@@ -101,6 +48,61 @@ final GoRouter router = GoRouter(
           ],
         ),
       ],
+    ),
+    // Top-level routes that can be accessed from anywhere
+    GoRoute(
+      path: '/add_item',
+      parentNavigatorKey: _rootNavigatorKey, // Important!
+      builder: (BuildContext context, GoRouterState state) {
+        return const AddItemScreen();
+      },
+    ),
+    GoRoute(
+      path: '/scan_qr',
+      parentNavigatorKey: _rootNavigatorKey,
+      builder: (BuildContext context, GoRouterState state) {
+        return const ScanQRScreen();
+      },
+    ),
+    GoRoute(
+      path: '/item_details/:itemId',
+      name: 'item_details',
+      parentNavigatorKey: _rootNavigatorKey,
+      builder: (BuildContext context, GoRouterState state) {
+        final itemId = state.pathParameters['itemId'];
+        if (itemId == null) {
+          return const Scaffold(
+              body: Center(child: Text("Error: Item ID is missing.")));
+        }
+        return ItemDetailsScreen(itemId: itemId);
+      },
+      routes: [
+         GoRoute(
+            path: 'edit',
+            name: 'edit_item',
+            builder: (BuildContext context, GoRouterState state) {
+              final itemId = state.pathParameters['itemId'];
+              if (itemId == null) {
+                return const Scaffold(
+                    body: Center(child: Text("Error: Item ID is missing.")));
+              }
+              return EditItemScreen(itemId: itemId);
+            },
+          ),
+      ]
+    ),
+     GoRoute(
+      path: '/qr_code',
+      name: 'qr_code',
+      parentNavigatorKey: _rootNavigatorKey,
+      builder: (BuildContext context, GoRouterState state) {
+        final qrData = state.extra as String?;
+        if (qrData == null) {
+          return const Scaffold(
+              body: Center(child: Text("Error: QR Data is missing.")));
+        }
+        return QrCodeScreen(itemId: qrData);
+      },
     ),
   ],
 );

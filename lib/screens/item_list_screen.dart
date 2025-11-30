@@ -159,7 +159,7 @@ class _ItemListScreenState extends State<ItemListScreen> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          context.go('/add-item');
+          context.go('/add_item');
         },
         backgroundColor: Theme.of(context).primaryColor,
         child: const Icon(Icons.add, color: Colors.white,),
