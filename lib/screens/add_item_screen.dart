@@ -69,11 +69,13 @@ class _AddItemScreenState extends State<AddItemScreen> {
     if (_imageFile == null) return null;
 
     if (_imgbbApiKey == "MASUKKAN_API_KEY_IMGBB_ANDA_DI_SINI") {
-      ScaffoldMessenger.of(context).showSnackBar(
+      if(mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
             content: Text(
                 "API Key imgbb belum dimasukkan. Silakan edit file add_item_screen.dart.")),
       );
+      }
       return null;
     }
 
@@ -92,7 +94,9 @@ class _AddItemScreenState extends State<AddItemScreen> {
       if (response.statusCode == 200) {
         final respStr = await response.stream.bytesToString();
         final json = jsonDecode(respStr);
-        final imageUrl = json['data']['url'];
+        String imageUrl = json['data']['url'];
+        
+        imageUrl = imageUrl.replaceFirst("i.ibb.co/", "i.ibb.co.com/");
         developer.log("Image uploaded to imgbb: $imageUrl",
             name: "AddItemScreen");
         return imageUrl;
@@ -101,18 +105,22 @@ class _AddItemScreenState extends State<AddItemScreen> {
         developer.log(
             "Image upload failed with status ${response.statusCode}: $errorBody",
             name: "AddItemScreen");
-        ScaffoldMessenger.of(context).showSnackBar(
+        if(mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
               content:
                   Text("Gagal mengunggah gambar: ${response.reasonPhrase}")),
         );
+        }
         return null;
       }
     } catch (e) {
       developer.log("Image upload failed: $e", name: "AddItemScreen");
-      ScaffoldMessenger.of(context).showSnackBar(
+      if(mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Gagal mengunggah gambar: $e")),
       );
+      }
       return null;
     }
   }
@@ -132,7 +140,7 @@ class _AddItemScreenState extends State<AddItemScreen> {
           setState(() {
             _isUploading = false;
           });
-          return; // Stop if image upload fails
+          return; 
         }
       }
 
@@ -150,15 +158,17 @@ class _AddItemScreenState extends State<AddItemScreen> {
             .toList(),
       };
 
-      // Save data first
       await docRef.set(data).then((_) {
-        // Navigate on success
-        context.goNamed('qr_code', extra: docRef.id);
+        if(mounted) {
+          context.goNamed('qr_code', extra: docRef.id);
+        }
       }).catchError((error) {
         developer.log("Failed to save data: $error", name: "AddItemScreen");
-        ScaffoldMessenger.of(context).showSnackBar(
+        if(mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text("Gagal menyimpan data: $error")),
         );
+        }
       }).whenComplete(() {
         if (mounted) {
           setState(() {

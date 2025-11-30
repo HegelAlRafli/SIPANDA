@@ -1,4 +1,3 @@
-
 import 'dart:convert';
 import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -77,10 +76,11 @@ class _EditItemScreenState extends State<EditItemScreen> {
       }
     } catch (e) {
       developer.log('Error fetching item data: $e', name: 'EditItemScreen');
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Gagal memuat data barang: $e')),
         );
+      }
     } finally {
       if (mounted) {
         setState(() {
@@ -120,10 +120,8 @@ class _EditItemScreenState extends State<EditItemScreen> {
   }
 
   Future<String?> _uploadImage(String itemId) async {
-    // If no new image is picked, keep the existing one.
     if (_imageFile == null) return _existingImageUrl;
 
-    // A new image has been picked, upload it to imgbb.
     var request = http.MultipartRequest(
         'POST', Uri.parse('https://api.imgbb.com/1/upload'));
 
@@ -139,7 +137,10 @@ class _EditItemScreenState extends State<EditItemScreen> {
       if (response.statusCode == 200) {
         final respStr = await response.stream.bytesToString();
         final json = jsonDecode(respStr);
-        final imageUrl = json['data']['url'];
+        String imageUrl = json['data']['url'];
+
+        imageUrl = imageUrl.replaceFirst("i.ibb.co/", "i.ibb.co.com/");
+
         developer.log("New image uploaded to imgbb: $imageUrl",
             name: "EditItemScreen");
         return imageUrl;
@@ -155,7 +156,7 @@ class _EditItemScreenState extends State<EditItemScreen> {
                     "Gagal mengunggah gambar baru: ${response.reasonPhrase}")),
           );
         }
-        return null; // Return null on failure
+        return null;
       }
     } catch (e) {
       developer.log("Image upload failed: $e", name: "EditItemScreen");
@@ -164,7 +165,7 @@ class _EditItemScreenState extends State<EditItemScreen> {
           SnackBar(content: Text("Gagal mengunggah gambar baru: $e")),
         );
       }
-      return null; // Return null on failure
+      return null;
     }
   }
 
@@ -179,7 +180,7 @@ class _EditItemScreenState extends State<EditItemScreen> {
         setState(() {
           _isUploading = false;
         });
-        return; // Stop if new image upload fails
+        return;
       }
 
       Map<String, dynamic> data = {
@@ -205,7 +206,7 @@ class _EditItemScreenState extends State<EditItemScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Data barang berhasil diperbarui!')),
           );
-          context.pop(); // Go back to details
+          context.pop();
         }
       }).catchError((error) {
         if (mounted) {

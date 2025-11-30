@@ -12,12 +12,12 @@ class ItemDetailsScreen extends StatefulWidget {
 }
 
 class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
-  // MODIFIED: This function no longer needs the imageUrl
   Future<void> _deleteItem(BuildContext context) async {
     try {
-      // We only delete the document from Firestore.
-      // The image on imgbb will remain, but will no longer be referenced.
-      await FirebaseFirestore.instance.collection('items').doc(widget.itemId).delete();
+      await FirebaseFirestore.instance
+          .collection('items')
+          .doc(widget.itemId)
+          .delete();
 
       if (!mounted) return;
 
@@ -34,7 +34,6 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
     }
   }
 
-  // MODIFIED: This function no longer needs the imageUrl
   void _showDeleteConfirmationDialog(BuildContext context) {
     showDialog(
       context: context,
@@ -53,7 +52,7 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
               child: const Text('Hapus', style: TextStyle(color: Colors.red)),
               onPressed: () {
                 Navigator.of(dialogContext).pop();
-                _deleteItem(context); // Call without imageUrl
+                _deleteItem(context);
               },
             ),
           ],
@@ -71,12 +70,12 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
           IconButton(
             icon: const Icon(Icons.edit),
             onPressed: () {
-              context.goNamed('edit_item', pathParameters: {'itemId': widget.itemId});
+              context.goNamed('edit_item',
+                  pathParameters: {'itemId': widget.itemId});
             },
           ),
           IconButton(
             icon: const Icon(Icons.delete),
-            // MODIFIED: We no longer need to fetch the document to get the URL
             onPressed: () {
               _showDeleteConfirmationDialog(context);
             },
@@ -84,8 +83,10 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
         ],
       ),
       body: FutureBuilder<DocumentSnapshot>(
-        future:
-            FirebaseFirestore.instance.collection('items').doc(widget.itemId).get(),
+        future: FirebaseFirestore.instance
+            .collection('items')
+            .doc(widget.itemId)
+            .get(),
         builder: (context, snapshot) {
           if (snapshot.hasError) {
             return const Center(child: Text("Terjadi kesalahan"));
@@ -100,18 +101,17 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
           final data = snapshot.data!.data() as Map<String, dynamic>;
           final details = data['details'] as List<dynamic>? ?? [];
           final imageUrl = data['imageUrl'] as String?;
+          print(imageUrl);
 
           return Padding(
             padding: const EdgeInsets.all(16.0),
             child: ListView(
               children: [
-                // The Image.network widget is correct and does not need changes.
-                // It will work with imgbb URLs.
                 if (imageUrl != null && imageUrl.isNotEmpty)
                   ClipRRect(
                     borderRadius: BorderRadius.circular(12.0),
                     child: Image.network(
-                      imageUrl,
+                      imageUrl.replaceFirst("i.ibb.co/", "i.ibb.co.com/"),
                       height: 250,
                       width: double.infinity,
                       fit: BoxFit.cover,
@@ -130,15 +130,23 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
                               child: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  Icon(Icons.broken_image, size: 48, color: Colors.grey),
+                                  Icon(Icons.broken_image,
+                                      size: 48, color: Colors.grey),
                                   SizedBox(height: 8),
-                                  Text("Gagal memuat gambar", style: TextStyle(color: Colors.grey))
+                                  Text("Gagal memuat gambar",
+                                      style: TextStyle(color: Colors.grey))
                                 ],
                               ),
                             ));
                       },
                     ),
-                  ) else const SizedBox(height: 250, child: Center(child: Icon(Icons.image_not_supported, size: 48, color: Colors.grey))),
+                  )
+                else
+                  const SizedBox(
+                      height: 250,
+                      child: Center(
+                          child: Icon(Icons.image_not_supported,
+                              size: 48, color: Colors.grey))),
                 const SizedBox(height: 24),
                 Text(data['namaBarang'] ?? 'Tanpa Nama',
                     style: Theme.of(context)
