@@ -10,6 +10,8 @@ import 'package:path_provider/path_provider.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:share_plus/share_plus.dart';
 
+import 'photo_view_screen.dart'; // Import the new screen
+
 class ItemDetailsScreen extends StatefulWidget {
   final String itemId;
   const ItemDetailsScreen({super.key, required this.itemId});
@@ -93,6 +95,12 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
     }
   }
 
+  void _navigateToPhotoView(String imageUrl) {
+    Navigator.push(context, MaterialPageRoute(builder: (_) {
+      return PhotoViewScreen(imageUrl: imageUrl);
+    }));
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -135,42 +143,47 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
           final imageUrl = data['imageUrl'] as String?;
           final pemegangBarang = data['pemegangBarang'] as List<dynamic>? ?? [];
 
+          final correctedImageUrl = imageUrl?.replaceFirst("i.ibb.co/", "i.ibb.co.com/");
+
           return Padding(
             padding: const EdgeInsets.all(16.0),
             child: ListView(
               children: [
-                if (imageUrl != null && imageUrl.isNotEmpty)
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(12.0),
-                    child: Image.network(
-                      imageUrl.replaceFirst("i.ibb.co/", "i.ibb.co.com/"),
-                      height: 250,
-                      width: double.infinity,
-                      fit: BoxFit.cover,
-                      loadingBuilder: (context, child, progress) {
-                        return progress == null
-                            ? child
-                            : const SizedBox(
-                                height: 250,
-                                child:
-                                    Center(child: CircularProgressIndicator()));
-                      },
-                      errorBuilder: (context, error, stackTrace) {
-                        return const SizedBox(
-                            height: 250,
-                            child: Center(
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(Icons.broken_image,
-                                      size: 48, color: Colors.grey),
-                                  SizedBox(height: 8),
-                                  Text("Gagal memuat gambar",
-                                      style: TextStyle(color: Colors.grey))
-                                ],
-                              ),
-                            ));
-                      },
+                if (correctedImageUrl != null && correctedImageUrl.isNotEmpty)
+                  GestureDetector(
+                    onTap: () => _navigateToPhotoView(correctedImageUrl),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(12.0),
+                      child: Image.network(
+                        correctedImageUrl,
+                        height: 250,
+                        width: double.infinity,
+                        fit: BoxFit.cover,
+                        loadingBuilder: (context, child, progress) {
+                          return progress == null
+                              ? child
+                              : const SizedBox(
+                                  height: 250,
+                                  child: Center(
+                                      child: CircularProgressIndicator()));
+                        },
+                        errorBuilder: (context, error, stackTrace) {
+                          return const SizedBox(
+                              height: 250,
+                              child: Center(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(Icons.broken_image,
+                                        size: 48, color: Colors.grey),
+                                    SizedBox(height: 8),
+                                    Text("Gagal memuat gambar",
+                                        style: TextStyle(color: Colors.grey))
+                                  ],
+                                ),
+                              ));
+                        },
+                      ),
                     ),
                   )
                 else
@@ -273,6 +286,7 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
       ...pemegangBarang.map((pemegang) {
         final nama = pemegang['nama'] as String? ?? 'Nama tidak tersedia';
         final imageUrl = pemegang['imageUrl'] as String?;
+        final correctedImageUrl = imageUrl?.replaceFirst("i.ibb.co/", "i.ibb.co.com/");
 
         return Card(
           margin: const EdgeInsets.symmetric(vertical: 8),
@@ -280,16 +294,22 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           elevation: 2,
           child: ListTile(
-            leading: CircleAvatar(
-              radius: 25,
-              backgroundColor: Colors.grey[200],
-              backgroundImage: (imageUrl != null && imageUrl.isNotEmpty)
-                  ? NetworkImage(
-                      imageUrl.replaceFirst("i.ibb.co/", "i.ibb.co.com/"))
-                  : null,
-              child: (imageUrl == null || imageUrl.isEmpty)
-                  ? const Icon(Icons.person, color: Colors.grey)
-                  : null,
+            leading: GestureDetector(
+              onTap: () {
+                if (correctedImageUrl != null && correctedImageUrl.isNotEmpty) {
+                  _navigateToPhotoView(correctedImageUrl);
+                }
+              },
+              child: CircleAvatar(
+                radius: 25,
+                backgroundColor: Colors.grey[200],
+                backgroundImage: (correctedImageUrl != null && correctedImageUrl.isNotEmpty)
+                    ? NetworkImage(correctedImageUrl)
+                    : null,
+                child: (correctedImageUrl == null || correctedImageUrl.isEmpty)
+                    ? const Icon(Icons.person, color: Colors.grey)
+                    : null,
+              ),
             ),
             title:
                 Text(nama, style: const TextStyle(fontWeight: FontWeight.w600)),
