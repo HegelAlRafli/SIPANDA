@@ -42,20 +42,22 @@ class MyApp extends StatelessWidget {
       colorScheme: ColorScheme.fromSeed(
         seedColor: primarySeedColor,
         brightness: Brightness.light,
+        primary: primarySeedColor
       ),
       textTheme: appTextTheme,
       appBarTheme: AppBarTheme(
-        backgroundColor: primarySeedColor,
-        foregroundColor: Colors.white,
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black,
+        elevation: 0,
         titleTextStyle:
-            GoogleFonts.poppins(fontSize: 24, fontWeight: FontWeight.bold),
+            GoogleFonts.poppins(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.black),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           foregroundColor: Colors.white,
           backgroundColor: primarySeedColor,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
           textStyle:
               GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w500),
         ),
@@ -67,20 +69,22 @@ class MyApp extends StatelessWidget {
       colorScheme: ColorScheme.fromSeed(
         seedColor: primarySeedColor,
         brightness: Brightness.dark,
+        primary: primarySeedColor
       ),
       textTheme: appTextTheme,
       appBarTheme: AppBarTheme(
-        backgroundColor: const Color(0xFF003366),
+        backgroundColor: Colors.grey[900],
         foregroundColor: Colors.white,
+        elevation: 0,
         titleTextStyle:
-            GoogleFonts.poppins(fontSize: 24, fontWeight: FontWeight.bold),
+            GoogleFonts.poppins(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           foregroundColor: Colors.white,
           backgroundColor: primarySeedColor,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
           textStyle:
               GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w500),
         ),

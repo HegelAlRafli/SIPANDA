@@ -327,10 +327,10 @@ Text("Pemegang Barang", style: Theme.of(context).textTheme.titleMedium?.copyWith
                         ? Image.network(p.existingImageUrl!.replaceFirst("i.ibb.co/", "i.ibb.co.com/"), fit: BoxFit.cover,
                             errorBuilder: (c, e, s) => const Icon(Icons.broken_image, color: Colors.grey), 
                             loadingBuilder: (c, child, progress) => progress == null ? child : const Center(child: CircularProgressIndicator()))
-                        : Column(mainAxisAlignment: MainAxisAlignment.center, children: [Icon(Icons.camera_alt, size: 24, color: Colors.grey[600]), const SizedBox(height: 4), Text('Ubah Foto', textAlign: TextAlign.center, style: TextStyle(fontSize: 10, color: Colors.grey[700]))]))
+                        : Column(mainAxisAlignment: MainAxisAlignment.center, children: [Icon(Icons.camera_alt, size: 24, color: Colors.grey[600]), const SizedBox(height: 4), Text('Ubah Foto', textAlign: TextAlign.center, style: TextStyle(fontSize: 10, color: Colors.grey[700]))])
                 ),
               ),
-            ),
+            ),),
             const SizedBox(width: 16),
             Expanded(child: _buildTextField(p.nameController, 'Nama Pemegang', 'Masukkan nama', isRequired: true)),
             IconButton(icon: const Icon(Icons.delete_outline, color: Colors.redAccent), onPressed: () => _removePemegangField(index))
