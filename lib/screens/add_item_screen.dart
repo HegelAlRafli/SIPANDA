@@ -82,12 +82,16 @@ class _AddItemScreenState extends State<AddItemScreen> {
     });
   }
 
-  void _removePemegangField(int index) {
-    setState(() {
-      _pemegangControllers[index].nameController.dispose();
-      _pemegangControllers.removeAt(index);
-    });
-  }
+    if (_imgbbApiKey == "MASUKKAN_API_KEY_IMGBB_ANDA_DI_SINI") {
+      if(mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+            content: Text(
+                "API Key imgbb belum dimasukkan. Silakan edit file add_item_screen.dart.")),
+      );
+      }
+      return null;
+    }
 
   Future<String?> _uploadImageFile(XFile imageFile) async {
     var request = http.MultipartRequest(
@@ -102,63 +106,53 @@ class _AddItemScreenState extends State<AddItemScreen> {
       if (response.statusCode == 200) {
         final respStr = await response.stream.bytesToString();
         final json = jsonDecode(respStr);
-        final imageUrl = json['data']['url'];
-        developer.log("Image uploaded to imgbb: $imageUrl", name: "Upload");
+        String imageUrl = json['data']['url'];
+        
+        imageUrl = imageUrl.replaceFirst("i.ibb.co/", "i.ibb.co.com/");
+        developer.log("Image uploaded to imgbb: $imageUrl",
+            name: "AddItemScreen");
         return imageUrl;
       } else {
         final errorBody = await response.stream.bytesToString();
         developer.log(
             "Image upload failed with status ${response.statusCode}: $errorBody",
-            name: "Upload");
+            name: "AddItemScreen");
+        if(mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content:
+                  Text("Gagal mengunggah gambar: ${response.reasonPhrase}")),
+        );
+        }
         return null;
       }
     } catch (e) {
-      developer.log("Image upload exception: $e", name: "Upload");
+      developer.log("Image upload failed: $e", name: "AddItemScreen");
+      if(mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Gagal mengunggah gambar: $e")),
+      );
+      }
       return null;
     }
   }
 
   void _generateQRCode() async {
-    if (!_formKey.currentState!.validate()) {
-      return;
-    }
+    if (_formKey.currentState!.validate()) {
+      setState(() {
+        _isUploading = true;
+      });
 
-    setState(() {
-      _isUploading = true;
-    });
+      final docRef = FirebaseFirestore.instance.collection('items').doc();
+      String? imageUrl;
 
-    final docRef = FirebaseFirestore.instance.collection('items').doc();
-    String? itemImageUrl;
-
-    // 1. Upload main item image
-    if (_itemImageFile != null) {
-      itemImageUrl = await _uploadImageFile(_itemImageFile!);
-      if (itemImageUrl == null) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("Gagal mengunggah gambar utama.")),
-          );
-        }
-        setState(() => _isUploading = false);
-        return;
-      }
-    }
-
-    // 2. Upload images for "Pemegang Barang" and collect data
-    List<Map<String, dynamic>> pemegangList = [];
-    for (var i = 0; i < _pemegangControllers.length; i++) {
-      final pemegang = _pemegangControllers[i];
-      String? pemegangImageUrl;
-
-      if (pemegang.imageFile != null) {
-        pemegangImageUrl = await _uploadImageFile(pemegang.imageFile!);
-        if (pemegangImageUrl == null) {
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text("Gagal mengunggah gambar untuk ${pemegang.nameController.text}.")),
-            );
-          }
-          // Continue to next iteration, save with missing image
+      if (_imageFile != null) {
+        imageUrl = await _uploadImage(docRef.id);
+        if (imageUrl == null) {
+          setState(() {
+            _isUploading = false;
+          });
+          return; 
         }
       }
       if (pemegang.nameController.text.isNotEmpty) {
@@ -169,39 +163,39 @@ class _AddItemScreenState extends State<AddItemScreen> {
       }
     }
 
-    // 3. Prepare all data for Firestore
-    Map<String, dynamic> data = {
-      'id': docRef.id,
-      'namaBarang': _namaBarangController.text,
-      'kategoriBarang': _kategoriBarangController.text,
-      'imageUrl': itemImageUrl,
-      'details': _dynamicFieldControllers
-          .map((controllers) => {
-                'key': controllers.keyController.text,
-                'value': controllers.valueController.text,
-              })
-          .where((field) => field['key']!.isNotEmpty)
-          .toList(),
-      'pemegangBarang': pemegangList, // Add the list of holders
-    };
+      Map<String, dynamic> data = {
+        'id': docRef.id,
+        'namaBarang': _namaBarangController.text,
+        'kategoriBarang': _kategoriBarangController.text,
+        'imageUrl': imageUrl,
+        'details': _dynamicFieldControllers
+            .map((controllers) => {
+                  'key': controllers.keyController.text,
+                  'value': controllers.valueController.text,
+                })
+            .where((field) => field['key']!.isNotEmpty)
+            .toList(),
+      };
 
-    // 4. Save to Firestore
-    await docRef.set(data).then((_) {
-      if (mounted) context.goNamed('qr_code', extra: docRef.id);
-    }).catchError((error) {
-      developer.log("Failed to save data: $error", name: "AddItemScreen");
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
+      await docRef.set(data).then((_) {
+        if(mounted) {
+          context.goNamed('qr_code', extra: docRef.id);
+        }
+      }).catchError((error) {
+        developer.log("Failed to save data: $error", name: "AddItemScreen");
+        if(mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text("Gagal menyimpan data: $error")),
         );
-      }
-    }).whenComplete(() {
-      if (mounted) {
-        setState(() {
-          _isUploading = false;
-        });
-      }
-    });
+        }
+      }).whenComplete(() {
+        if (mounted) {
+          setState(() {
+            _isUploading = false;
+          });
+        }
+      });
+    }
   }
 
  @override

@@ -20,11 +20,12 @@ class ItemDetailsScreen extends StatefulWidget {
 }
 
 class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
-  final GlobalKey _qrKey = GlobalKey();
-
   Future<void> _deleteItem(BuildContext context) async {
     try {
-      await FirebaseFirestore.instance.collection('items').doc(widget.itemId).delete();
+      await FirebaseFirestore.instance
+          .collection('items')
+          .doc(widget.itemId)
+          .delete();
 
       if (!mounted) return;
 
@@ -100,7 +101,8 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
           IconButton(
             icon: const Icon(Icons.edit),
             onPressed: () {
-              context.goNamed('edit_item', pathParameters: {'itemId': widget.itemId});
+              context.goNamed('edit_item',
+                  pathParameters: {'itemId': widget.itemId});
             },
           ),
           IconButton(
@@ -112,8 +114,10 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
         ],
       ),
       body: FutureBuilder<DocumentSnapshot>(
-        future:
-            FirebaseFirestore.instance.collection('items').doc(widget.itemId).get(),
+        future: FirebaseFirestore.instance
+            .collection('items')
+            .doc(widget.itemId)
+            .get(),
         builder: (context, snapshot) {
           if (snapshot.hasError) {
             return const Center(child: Text("Terjadi kesalahan"));
@@ -128,7 +132,7 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
           final data = snapshot.data!.data() as Map<String, dynamic>;
           final details = data['details'] as List<dynamic>? ?? [];
           final imageUrl = data['imageUrl'] as String?;
-          final pemegangBarang = data['pemegangBarang'] as List<dynamic>? ?? [];
+          print(imageUrl);
 
           return Padding(
             padding: const EdgeInsets.all(16.0),
@@ -138,7 +142,7 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
                   ClipRRect(
                     borderRadius: BorderRadius.circular(12.0),
                     child: Image.network(
-                      imageUrl,
+                      imageUrl.replaceFirst("i.ibb.co/", "i.ibb.co.com/"),
                       height: 250,
                       width: double.infinity,
                       fit: BoxFit.cover,
@@ -157,15 +161,23 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
                               child: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  Icon(Icons.broken_image, size: 48, color: Colors.grey),
+                                  Icon(Icons.broken_image,
+                                      size: 48, color: Colors.grey),
                                   SizedBox(height: 8),
-                                  Text("Gagal memuat gambar", style: TextStyle(color: Colors.grey))
+                                  Text("Gagal memuat gambar",
+                                      style: TextStyle(color: Colors.grey))
                                 ],
                               ),
                             ));
                       },
                     ),
-                  ) else const SizedBox(height: 250, child: Center(child: Icon(Icons.image_not_supported, size: 48, color: Colors.grey))),
+                  )
+                else
+                  const SizedBox(
+                      height: 250,
+                      child: Center(
+                          child: Icon(Icons.image_not_supported,
+                              size: 48, color: Colors.grey))),
                 const SizedBox(height: 24),
                 Text(data['namaBarang'] ?? 'Tanpa Nama',
                     style: Theme.of(context)

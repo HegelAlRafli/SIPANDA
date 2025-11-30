@@ -1,4 +1,3 @@
-
 import 'dart:convert';
 import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -125,7 +124,23 @@ class _EditItemScreenState extends State<EditItemScreen> {
     }
   }
 
-  Future<String?> _uploadImageFile(XFile imageFile) async {
+  void _addDynamicField() {
+    setState(() {
+      _dynamicFieldControllers.add(DynamicFieldControllers());
+    });
+  }
+
+  void _removeDynamicField(int index) {
+    setState(() {
+      _dynamicFieldControllers[index].keyController.dispose();
+      _dynamicFieldControllers[index].valueController.dispose();
+      _dynamicFieldControllers.removeAt(index);
+    });
+  }
+
+  Future<String?> _uploadImage(String itemId) async {
+    if (_imageFile == null) return _existingImageUrl;
+
     var request = http.MultipartRequest(
         'POST', Uri.parse('https://api.imgbb.com/1/upload'));
     request.fields['key'] = _imgbbApiKey;
@@ -136,13 +151,35 @@ class _EditItemScreenState extends State<EditItemScreen> {
       var response = await request.send();
       if (response.statusCode == 200) {
         final respStr = await response.stream.bytesToString();
-        return jsonDecode(respStr)['data']['url'];
+        final json = jsonDecode(respStr);
+        String imageUrl = json['data']['url'];
+
+        imageUrl = imageUrl.replaceFirst("i.ibb.co/", "i.ibb.co.com/");
+
+        developer.log("New image uploaded to imgbb: $imageUrl",
+            name: "EditItemScreen");
+        return imageUrl;
       } else {
-        developer.log('Upload failed: ${response.statusCode}', name: 'Upload');
+        final errorBody = await response.stream.bytesToString();
+        developer.log(
+            "Image upload failed with status ${response.statusCode}: $errorBody",
+            name: "EditItemScreen");
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+                content: Text(
+                    "Gagal mengunggah gambar baru: ${response.reasonPhrase}")),
+          );
+        }
         return null;
       }
     } catch (e) {
-      developer.log('Upload exception: $e', name: 'Upload');
+      developer.log("Image upload failed: $e", name: "EditItemScreen");
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Gagal mengunggah gambar baru: $e")),
+        );
+      }
       return null;
     }
   }
@@ -150,30 +187,54 @@ class _EditItemScreenState extends State<EditItemScreen> {
   void _updateItem() async {
     if (!_formKey.currentState!.validate()) return;
 
-    setState(() => _isUploading = true);
-
-    String? finalItemImageUrl = _existingItemImageUrl;
-    if (_itemImageFile != null) {
-      finalItemImageUrl = await _uploadImageFile(_itemImageFile!);
-      if (finalItemImageUrl == null) {
-        if(mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Gagal mengunggah gambar utama.")));
-        setState(() => _isUploading = false);
+      String? newImageUrl = await _uploadImage(widget.itemId);
+      if (_imageFile != null && newImageUrl == null) {
+        setState(() {
+          _isUploading = false;
+        });
         return;
       }
     }
 
-    List<Map<String, dynamic>> pemegangList = [];
-    for (var pemegang in _pemegangControllers) {
-      String? finalPemegangImageUrl = pemegang.existingImageUrl;
-      if (pemegang.imageFile != null) {
-        finalPemegangImageUrl = await _uploadImageFile(pemegang.imageFile!);
-      }
-      if (pemegang.nameController.text.isNotEmpty) {
-        pemegangList.add({
-          'nama': pemegang.nameController.text,
-          'imageUrl': finalPemegangImageUrl,
-        });
-      }
+      Map<String, dynamic> data = {
+        'id': widget.itemId,
+        'namaBarang': _namaBarangController.text,
+        'kategoriBarang': _kategoriBarangController.text,
+        'imageUrl': newImageUrl,
+        'details': _dynamicFieldControllers
+            .map((controllers) => {
+                  'key': controllers.keyController.text,
+                  'value': controllers.valueController.text,
+                })
+            .where((field) => field['key']!.isNotEmpty)
+            .toList(),
+      };
+
+      await FirebaseFirestore.instance
+          .collection('items')
+          .doc(widget.itemId)
+          .update(data)
+          .then((_) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Data barang berhasil diperbarui!')),
+          );
+          context.pop();
+        }
+      }).catchError((error) {
+        if (mounted) {
+          developer.log('Failed to update data: $error', name: 'EditItemScreen');
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Gagal memperbarui data: $error')),
+          );
+        }
+      }).whenComplete(() {
+        if (mounted) {
+          setState(() {
+            _isUploading = false;
+          });
+        }
+      });
     }
 
     Map<String, dynamic> dataToUpdate = {
