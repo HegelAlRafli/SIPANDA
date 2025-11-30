@@ -1,4 +1,3 @@
-
 import 'dart:convert';
 import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -81,7 +80,6 @@ class _EditItemScreenState extends State<EditItemScreen> {
 
         if (data['details'] != null && data['details'] is List) {
           for (var detail in data['details']) {
-            // CORRECTED INITIALIZATION LOGIC
             final controllers = DynamicFieldControllers();
             controllers.keyController.text = detail['key'] ?? '';
             controllers.valueController.text = detail['value'] ?? '';
@@ -136,7 +134,9 @@ class _EditItemScreenState extends State<EditItemScreen> {
       var response = await request.send();
       if (response.statusCode == 200) {
         final respStr = await response.stream.bytesToString();
-        return jsonDecode(respStr)['data']['url'];
+        String imageUrl = jsonDecode(respStr)['data']['url'];
+        imageUrl = imageUrl.replaceFirst("i.ibb.co/", "i.ibb.co.com/");
+        return imageUrl;
       } else {
         developer.log('Upload failed: ${response.statusCode}', name: 'Upload');
         return null;
@@ -276,7 +276,7 @@ Widget build(BuildContext context) {
             child: _itemImageFile != null
               ? Image.file(File(_itemImageFile!.path), fit: BoxFit.cover)
               : (_existingItemImageUrl != null
-                  ? Image.network(_existingItemImageUrl!, fit: BoxFit.cover, 
+                  ? Image.network(_existingItemImageUrl!.replaceFirst("i.ibb.co/", "i.ibb.co.com/"), fit: BoxFit.cover, 
                       errorBuilder: (c, e, s) => const Icon(Icons.broken_image, size: 48, color: Colors.grey),
                       loadingBuilder: (c, child, progress) => progress == null ? child : const Center(child: CircularProgressIndicator()))
                   : Column(mainAxisAlignment: MainAxisAlignment.center, children: [Icon(Icons.camera_alt, color: Colors.grey[600], size: 40), const SizedBox(height: 8), Text('Ubah Gambar', style: TextStyle(color: Colors.grey[700]))])
@@ -324,7 +324,7 @@ Widget build(BuildContext context) {
                   child: p.imageFile != null
                     ? Image.file(File(p.imageFile!.path), fit: BoxFit.cover)
                     : (p.existingImageUrl != null
-                        ? Image.network(p.existingImageUrl!, fit: BoxFit.cover,
+                        ? Image.network(p.existingImageUrl!.replaceFirst("i.ibb.co/", "i.ibb.co.com/"), fit: BoxFit.cover,
                             errorBuilder: (c, e, s) => const Icon(Icons.broken_image, color: Colors.grey), 
                             loadingBuilder: (c, child, progress) => progress == null ? child : const Center(child: CircularProgressIndicator()))
                         : Column(mainAxisAlignment: MainAxisAlignment.center, children: [Icon(Icons.camera_alt, size: 24, color: Colors.grey[600]), const SizedBox(height: 4), Text('Ubah Foto', textAlign: TextAlign.center, style: TextStyle(fontSize: 10, color: Colors.grey[700]))]))

@@ -1,4 +1,3 @@
-
 import 'dart:convert';
 import 'dart:io';
 
@@ -102,7 +101,10 @@ class _AddItemScreenState extends State<AddItemScreen> {
       if (response.statusCode == 200) {
         final respStr = await response.stream.bytesToString();
         final json = jsonDecode(respStr);
-        final imageUrl = json['data']['url'];
+        String imageUrl = json['data']['url'];
+
+        imageUrl = imageUrl.replaceFirst("i.ibb.co/", "i.ibb.co.com/");
+
         developer.log("Image uploaded to imgbb: $imageUrl", name: "Upload");
         return imageUrl;
       } else {
@@ -130,7 +132,6 @@ class _AddItemScreenState extends State<AddItemScreen> {
     final docRef = FirebaseFirestore.instance.collection('items').doc();
     String? itemImageUrl;
 
-    // 1. Upload main item image
     if (_itemImageFile != null) {
       itemImageUrl = await _uploadImageFile(_itemImageFile!);
       if (itemImageUrl == null) {
@@ -144,7 +145,6 @@ class _AddItemScreenState extends State<AddItemScreen> {
       }
     }
 
-    // 2. Upload images for "Pemegang Barang" and collect data
     List<Map<String, dynamic>> pemegangList = [];
     for (var i = 0; i < _pemegangControllers.length; i++) {
       final pemegang = _pemegangControllers[i];
@@ -158,18 +158,16 @@ class _AddItemScreenState extends State<AddItemScreen> {
               SnackBar(content: Text("Gagal mengunggah gambar untuk ${pemegang.nameController.text}.")),
             );
           }
-          // Continue to next iteration, save with missing image
         }
       }
       if (pemegang.nameController.text.isNotEmpty) {
         pemegangList.add({
           'nama': pemegang.nameController.text,
-          'imageUrl': pemegangImageUrl, // Can be null
+          'imageUrl': pemegangImageUrl,
         });
       }
     }
 
-    // 3. Prepare all data for Firestore
     Map<String, dynamic> data = {
       'id': docRef.id,
       'namaBarang': _namaBarangController.text,
@@ -182,10 +180,9 @@ class _AddItemScreenState extends State<AddItemScreen> {
               })
           .where((field) => field['key']!.isNotEmpty)
           .toList(),
-      'pemegangBarang': pemegangList, // Add the list of holders
+      'pemegangBarang': pemegangList,
     };
 
-    // 4. Save to Firestore
     await docRef.set(data).then((_) {
       if (mounted) context.goNamed('qr_code', extra: docRef.id);
     }).catchError((error) {

@@ -1,4 +1,3 @@
-
 import 'dart:io';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
@@ -24,7 +23,10 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
 
   Future<void> _deleteItem(BuildContext context) async {
     try {
-      await FirebaseFirestore.instance.collection('items').doc(widget.itemId).delete();
+      await FirebaseFirestore.instance
+          .collection('items')
+          .doc(widget.itemId)
+          .delete();
 
       if (!mounted) return;
 
@@ -100,7 +102,8 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
           IconButton(
             icon: const Icon(Icons.edit),
             onPressed: () {
-              context.goNamed('edit_item', pathParameters: {'itemId': widget.itemId});
+              context.goNamed('edit_item',
+                  pathParameters: {'itemId': widget.itemId});
             },
           ),
           IconButton(
@@ -112,8 +115,10 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
         ],
       ),
       body: FutureBuilder<DocumentSnapshot>(
-        future:
-            FirebaseFirestore.instance.collection('items').doc(widget.itemId).get(),
+        future: FirebaseFirestore.instance
+            .collection('items')
+            .doc(widget.itemId)
+            .get(),
         builder: (context, snapshot) {
           if (snapshot.hasError) {
             return const Center(child: Text("Terjadi kesalahan"));
@@ -138,7 +143,7 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
                   ClipRRect(
                     borderRadius: BorderRadius.circular(12.0),
                     child: Image.network(
-                      imageUrl,
+                      imageUrl.replaceFirst("i.ibb.co/", "i.ibb.co.com/"),
                       height: 250,
                       width: double.infinity,
                       fit: BoxFit.cover,
@@ -157,15 +162,23 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
                               child: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  Icon(Icons.broken_image, size: 48, color: Colors.grey),
+                                  Icon(Icons.broken_image,
+                                      size: 48, color: Colors.grey),
                                   SizedBox(height: 8),
-                                  Text("Gagal memuat gambar", style: TextStyle(color: Colors.grey))
+                                  Text("Gagal memuat gambar",
+                                      style: TextStyle(color: Colors.grey))
                                 ],
                               ),
                             ));
                       },
                     ),
-                  ) else const SizedBox(height: 250, child: Center(child: Icon(Icons.image_not_supported, size: 48, color: Colors.grey))),
+                  )
+                else
+                  const SizedBox(
+                      height: 250,
+                      child: Center(
+                          child: Icon(Icons.image_not_supported,
+                              size: 48, color: Colors.grey))),
                 const SizedBox(height: 24),
                 Text(data['namaBarang'] ?? 'Tanpa Nama',
                     style: Theme.of(context)
@@ -187,10 +200,9 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
                   return _buildDetailRow(key, value);
                 }),
                 const Divider(height: 32),
-                // New Section for Pemegang Barang
                 if (pemegangBarang.isNotEmpty)
                   ..._buildPemegangList(pemegangBarang),
-                
+
                 Center(
                   child: RepaintBoundary(
                     key: _qrKey,
@@ -249,13 +261,15 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
     );
   }
 
-    List<Widget> _buildPemegangList(List<dynamic> pemegangBarang) {
+  List<Widget> _buildPemegangList(List<dynamic> pemegangBarang) {
     return [
       Padding(
         padding: const EdgeInsets.symmetric(vertical: 8.0),
-        child: Text("Daftar Pemegang Barang", 
-          style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)
-        ),
+        child: Text("Daftar Pemegang Barang",
+            style: Theme.of(context)
+                .textTheme
+                .titleLarge
+                ?.copyWith(fontWeight: FontWeight.bold)),
       ),
       ...pemegangBarang.map((pemegang) {
         final nama = pemegang['nama'] as String? ?? 'Nama tidak tersedia';
@@ -263,20 +277,22 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
 
         return Card(
           margin: const EdgeInsets.symmetric(vertical: 8),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           elevation: 2,
           child: ListTile(
             leading: CircleAvatar(
               radius: 25,
               backgroundColor: Colors.grey[200],
               backgroundImage: (imageUrl != null && imageUrl.isNotEmpty)
-                  ? NetworkImage(imageUrl)
+                  ? NetworkImage(imageUrl.replaceFirst("i.ibb.co/", "i.ibb.co.com/"))
                   : null,
               child: (imageUrl == null || imageUrl.isEmpty)
                   ? const Icon(Icons.person, color: Colors.grey)
                   : null,
             ),
-            title: Text(nama, style: const TextStyle(fontWeight: FontWeight.w600)),
+            title:
+                Text(nama, style: const TextStyle(fontWeight: FontWeight.w600)),
           ),
         );
       }).toList(),
