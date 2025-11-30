@@ -202,7 +202,6 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
                 const Divider(height: 32),
                 if (pemegangBarang.isNotEmpty)
                   ..._buildPemegangList(pemegangBarang),
-
                 Center(
                   child: RepaintBoundary(
                     key: _qrKey,
@@ -285,7 +284,8 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
               radius: 25,
               backgroundColor: Colors.grey[200],
               backgroundImage: (imageUrl != null && imageUrl.isNotEmpty)
-                  ? NetworkImage(imageUrl.replaceFirst("i.ibb.co/", "i.ibb.co.com/"))
+                  ? NetworkImage(
+                      imageUrl.replaceFirst("i.ibb.co/", "i.ibb.co.com/"))
                   : null,
               child: (imageUrl == null || imageUrl.isEmpty)
                   ? const Icon(Icons.person, color: Colors.grey)
